@@ -1,3 +1,2 @@
-Ciao qui troverete tutti i codici
-non lo 
-pooo
+Qui sono disponibili i codici sorgente delle implementazioni descritte nella tesi magistrale che ho redatto al termine del corso di Finanza e mercati 
+internazionali. Il titolo della tesi è Le Opzioi: Approccio pratico all’analisi delle serie storiche e all’operatività sulle opzioni in python.
