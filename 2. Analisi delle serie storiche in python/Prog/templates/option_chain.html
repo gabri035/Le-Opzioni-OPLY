@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <title>Option Chain - {{ ticker }}</title>
+    <style>
+        .itm {
+            background-color: #ccffcc; /* verde chiaro */
+        }
+    </style>
+</head>
+<body>
+    <h1>Option Chain Viewer</h1>
+
+    <form method="post">
+        <label for="ticker">Ticker:</label>
+        <input type="text" id="ticker" name="ticker" value="{{ ticker }}" required>
+        <br><br>
+
+        {% if expiries %}
+            <label for="expiry">Scadenza:</label>
+            <select name="expiry" id="expiry" required>
+                <option value="">-- Seleziona una scadenza --</option>
+                {% for exp in expiries %}
+                    <option value="{{ exp }}" {% if exp == expiry %}selected{% endif %}>{{ exp }}</option>
+                {% endfor %}
+            </select>
+            <br><br>
+            <button type="submit">Mostra Option Chain</button>
+        {% else %}
+            <button type="submit">Cerca Scadenze</button>
+        {% endif %}
+    </form>
+
+    {% if option_data %}
+        <h2>Call Options</h2>
+        <table border="1">
+            <tr>
+                <th>Strike</th>
+                <th>Bid</th>
+                <th>Ask</th>
+                <th>Volume</th>
+            </tr>
+            {% for option in option_data.calls %}
+            <tr class="{% if option.inTheMoney %}itm{% endif %}">
+                <td>{{ option.strike }}</td>
+                <td>{{ option.bid }}</td>
+                <td>{{ option.ask }}</td>
+                <td>{{ option.volume }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+
+        <h2>Put Options</h2>
+        <table border="1">
+            <tr>
+                <th>Strike</th>
+                <th>Bid</th>
+                <th>Ask</th>
+                <th>Volume</th>
+            </tr>
+            {% for option in option_data.puts %}
+            <tr class="{% if option.inTheMoney %}itm{% endif %}">
+                <td>{{ option.strike }}</td>
+                <td>{{ option.bid }}</td>
+                <td>{{ option.ask }}</td>
+                <td>{{ option.volume }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+    {% endif %}
+
+    <br>
+    <a href="/">Torna alla Home</a>
+</body>
+</html>

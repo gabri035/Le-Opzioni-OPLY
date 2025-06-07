@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dati Aziendali - {{ ticker }}</title>
+</head>
+<body>
+    <h1>Informazioni su {{ data.longName or ticker }}</h1>
+
+    <form method="post">
+        <label for="ticker">Ticker:</label>
+        <input type="text" id="ticker" name="ticker" value="{{ ticker }}" required>
+        <button type="submit">Cerca</button>
+    </form>
+
+    {% if data %}
+        <h2>Dati Aziendali</h2>
+        <ul>
+            <li><strong>Nome corto:</strong> {{ data.shortName }}</li>
+            <li><strong>Nome lungo:</strong> {{ data.longName }}</li>
+            <li><strong>Paese:</strong> {{ data.country }}</li>
+            <li><strong>Settore:</strong> {{ data.sector }}</li>
+            <li><strong>Industria:</strong> {{ data.industry }}</li>
+            <li><strong>Dipendenti:</strong> {{ data.fullTimeEmployees }}</li>
+            <li><strong>Exchange:</strong> {{ data.exchange }}</li>
+            <li><strong>Stato mercato:</strong> {{ data.marketState }}</li>
+        </ul>
+
+        <h2>Dirigenti (CEO/CFO)</h2>
+        {% if data.companyOfficers %}
+            <ul>
+            {% for officer in data.companyOfficers %}
+                <li>{{ officer.name }} - {{ officer.title }}</li>
+            {% endfor %}
+            </ul>
+        {% else %}
+            <p>Nessuna informazione disponibile.</p>
+        {% endif %}
+
+        <h2>Finanza Giornaliera</h2>
+        <ul>
+            <li><strong>Apertura:</strong> {{ data.open }}</li>
+            <li><strong>Precedente Chiusura:</strong> {{ data.previousClose }}</li>
+            <li><strong>Minimo Giorno:</strong> {{ data.dayLow }}</li>
+            <li><strong>Massimo Giorno:</strong> {{ data.dayHigh }}</li>
+        </ul>
+
+        <h2>Dividendi</h2>
+        <ul>
+            <li><strong>Dividend Rate:</strong> {{ data.dividendRate }}</li>
+            <li><strong>Dividend Yield:</strong> {{ data.dividendYield }}</li>
+            <li><strong>Media 5 anni:</strong> {{ data.fiveYearAvgDividendYield }}</li>
+            <li><strong>Trailing Annual Dividend:</strong> {{ data.trailingAnnualDividendRate }}</li>
+        </ul>
+
+        <h2>Capitalizzazione & Prezzi</h2>
+        <ul>
+            <li><strong>Market Cap:</strong> {{ data.marketCap }}</li>
+            <li><strong>52W Min:</strong> {{ data.fiftyTwoWeekLow }}</li>
+            <li><strong>52W Max:</strong> {{ data.fiftyTwoWeekHigh }}</li>
+            <li><strong>Media 200 giorni:</strong> {{ data.twoHundredDayAverage }}</li>
+        </ul>
+
+        <h2>Descrizione Estesa</h2>
+        <p>{{ data.longBusinessSummary }}</p>
+    {% endif %}
+</body>
+</html>
