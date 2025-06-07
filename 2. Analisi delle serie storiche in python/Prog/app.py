@@ -1,10 +1,11 @@
 from flask import Flask, render_template, request
-from dash import html, dcc, Dash
+from dash import html, dcc, Dash, dash_table
 from dash.dependencies import Input, Output
 import numpy as np
 from scipy.stats import norm
 import plotly.graph_objs as go
 import yfinance as yf
+from scipy.stats import norm
 
 # --------------------------
 # FUNZIONE BLACK-SCHOLES
@@ -18,6 +19,35 @@ def black_scholes(S, K, T, r, sigma, option_type='call'):
         return S * norm.cdf(d1) - K * np.exp(-r * T) * norm.cdf(d2)
     else:
         return K * np.exp(-r * T) * norm.cdf(-d2) - S * norm.cdf(-d1)
+    
+    
+def black_scholes_greeks(S, K, T, r, sigma, option_type='call'):
+    if T <= 0:
+        return {'delta': 0, 'gamma': 0, 'vega': 0, 'theta': 0, 'rho': 0}
+    
+    d1 = (np.log(S / K) + (r + 0.5 * sigma ** 2) * T) / (sigma * np.sqrt(T))
+    d2 = d1 - sigma * np.sqrt(T)
+
+    delta = norm.cdf(d1) if option_type == 'call' else -norm.cdf(-d1)
+    gamma = norm.pdf(d1) / (S * sigma * np.sqrt(T))
+    vega = S * norm.pdf(d1) * np.sqrt(T) / 100  # espresso per 1% di cambio
+    theta_call = (-S * norm.pdf(d1) * sigma / (2 * np.sqrt(T))
+                  - r * K * np.exp(-r * T) * norm.cdf(d2)) / 365
+    theta_put = (-S * norm.pdf(d1) * sigma / (2 * np.sqrt(T))
+                 + r * K * np.exp(-r * T) * norm.cdf(-d2)) / 365
+    theta = theta_call if option_type == 'call' else theta_put
+    rho_call = K * T * np.exp(-r * T) * norm.cdf(d2) / 100
+    rho_put = -K * T * np.exp(-r * T) * norm.cdf(-d2) / 100
+    rho = rho_call if option_type == 'call' else rho_put
+
+    return {
+        'delta': delta,
+        'gamma': gamma,
+        'vega': vega,
+        'theta': theta,
+        'rho': rho
+    }
+    
 
 # --------------------------
 # FLASK SERVER
@@ -143,6 +173,8 @@ app.layout = html.Div([
             )
         ], style={'margin': '10px'})
         for i in range(4)
+        
+        
     ]),
 
     html.H4("Simula variazione parametri"),
@@ -160,13 +192,29 @@ app.layout = html.Div([
                marks={i: str(i) for i in range(0, 91, 15)}),
 
     dcc.Graph(id='payoff-graph'),
+    
+    html.H4("Greche Aggregate della Strategia"),
+    dash_table.DataTable(
+    id='greeks-table',
+    columns=[
+        {"name": "Delta", "id": "delta"},
+        {"name": "Gamma", "id": "gamma"},
+        {"name": "Vega", "id": "vega"},
+        {"name": "Theta", "id": "theta"},
+        {"name": "Rho", "id": "rho"},
+    ],
+    data=[],
+    style_cell={'textAlign': 'center'},
+    style_table={'marginTop': '20px', 'overflowX': 'auto'}
+),
 ])
 
 # ------------------------
 # Callback
 # ------------------------
 @app.callback(
-    Output('payoff-graph', 'figure'),
+    [Output('payoff-graph', 'figure'),
+     Output('greeks-table', 'data')],
     [Input('spot_price', 'value'),
      Input('slider_volatility', 'value'),
      Input('slider_rate', 'value'),
@@ -182,7 +230,7 @@ def update_graph(spot_price, vol, rate, days, *args):
     types = args[8:12]
     positions = args[12:16]
 
-    T = days / 365
+    T = days / 242                                                  ##### Giorni di trading in un anno ( o meglio 365? )
     sigma = vol / 100
     r = rate / 100
 
@@ -194,6 +242,8 @@ def update_graph(spot_price, vol, rate, days, *args):
 
     payoff = np.zeros_like(S_range)
     pnl = np.zeros_like(S_range)
+    # Inizializza greche aggregate
+    greeks_total = {'delta': 0, 'gamma': 0, 'vega': 0, 'theta': 0, 'rho': 0}
 
     for i in range(4):
         if None in (Ks[i], premiums[i], types[i], positions[i]):
@@ -203,6 +253,11 @@ def update_graph(spot_price, vol, rate, days, *args):
         typ = types[i]
         qty = positions[i]
 
+        # Calcolo greche su spot attuale
+        greeks = black_scholes_greeks(spot_price, K, T, r, sigma, typ)
+        for key in greeks:
+            greeks_total[key] += qty * greeks[key]
+        
         # Payoff a scadenza
         payoff_leg = np.maximum(S_range - K, 0) if typ == 'call' else np.maximum(K - S_range, 0)
         payoff += qty * (payoff_leg - premium)
@@ -223,7 +278,7 @@ def update_graph(spot_price, vol, rate, days, *args):
         xaxis=dict(range=[S_min, S_max]),
         yaxis=dict(zeroline=True, zerolinewidth=2, zerolinecolor='gray')
     )
-    return fig
+    return fig, [greeks_total]
 
 # --------------------------
 # AVVIO SERVER
