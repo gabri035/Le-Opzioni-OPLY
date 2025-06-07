@@ -1,6 +1,5 @@
 from flask import Flask, render_template, request
-import dash
-from dash import html, dcc
+from dash import html, dcc, Dash
 from dash.dependencies import Input, Output
 import numpy as np
 from scipy.stats import norm
@@ -104,22 +103,26 @@ def option_chain():
 
     return render_template("option_chain.html", ticker=ticker, expiry=expiry, expiries=expiries, option_data=option_data)
 
-# --------------------------
-# DASH APP PER STRATEGIE
-# --------------------------
-app_dash = dash.Dash(__name__, server=server, url_base_pathname='/dash/')
 
-app_dash.layout = html.Div([
-    html.H2("Strategia Opzioni – Inserimento parametri"),
+
+
+############### strategie ################-
+# ------------------------
+# Dash App
+# ------------------------
+app = Dash(__name__, server=server, url_base_pathname='/dash/')
+app.title = "Strategia Opzioni"
+
+# ------------------------
+# Layout
+# ------------------------
+app.layout = html.Div([
+    html.H2("Simulazione Strategia Opzioni"),
 
     html.Div([
         html.H4("Dati generali"),
         html.Label("Prezzo attuale sottostante (€):"),
         dcc.Input(id='spot_price', type='number', value=100),
-        html.Label("Volatilità (%)"),
-        dcc.Input(id='volatility', type='number', value=20),
-        html.Label("Tasso interesse (%)"),
-        dcc.Input(id='rate', type='number', value=1),
     ], style={'margin': '20px'}),
 
     html.H4("Dati delle 4 opzioni"),
@@ -128,29 +131,43 @@ app_dash.layout = html.Div([
             html.Label(f"Opzione {i+1}"),
             dcc.Input(id=f'K_{i}', type='number', placeholder='Strike'),
             dcc.Input(id=f'premium_{i}', type='number', placeholder='Prezzo'),
-            dcc.Dropdown(id=f'type_{i}', options=[{'label': 'Call', 'value': 'call'}, {'label': 'Put', 'value': 'put'}], placeholder='Tipo'),
-            dcc.Dropdown(id=f'pos_{i}', options=[{'label': 'Buy', 'value': 1}, {'label': 'Short', 'value': -1}], placeholder='Posizione')
+            dcc.Dropdown(
+                id=f'type_{i}',
+                options=[{'label': 'Call', 'value': 'call'}, {'label': 'Put', 'value': 'put'}],
+                placeholder='Tipo'
+            ),
+            dcc.Dropdown(
+                id=f'pos_{i}',
+                options=[{'label': 'Buy', 'value': 1}, {'label': 'Short', 'value': -1}],
+                placeholder='Posizione'
+            )
         ], style={'margin': '10px'})
         for i in range(4)
     ]),
 
-    html.H4("Modifica dinamica dei parametri"),
-    html.Label("Prezzo sottostante (simulazione):"),
-    dcc.Slider(id='slider_spot', min=50, max=150, step=1, value=100, marks={i: str(i) for i in range(50, 151, 10)}),
-    html.Label("Volatilità (%)"),
-    dcc.Slider(id='slider_volatility', min=5, max=100, step=1, value=20, marks={i: f"{i}%" for i in range(10, 101, 10)}),
+    html.H4("Simula variazione parametri"),
+
+    html.Label("Volatilità implicita (%)"),
+    dcc.Slider(id='slider_volatility', min=5, max=100, step=1, value=20,
+               marks={i: f"{i}%" for i in range(10, 101, 10)}),
+
     html.Label("Tasso di interesse (%)"),
-    dcc.Slider(id='slider_rate', min=0, max=10, step=0.1, value=1, marks={i: f"{i}%" for i in range(0, 11, 1)}),
+    dcc.Slider(id='slider_rate', min=0, max=10, step=0.1, value=1,
+               marks={i: f"{i}%" for i in range(0, 11)}),
+
     html.Label("Giorni alla scadenza"),
-    dcc.Slider(id='slider_days', min=1, max=90, step=1, value=30, marks={i: str(i) for i in range(0, 91, 15)}),
+    dcc.Slider(id='slider_days', min=1, max=90, step=1, value=30,
+               marks={i: str(i) for i in range(0, 91, 15)}),
 
     dcc.Graph(id='payoff-graph'),
-    html.Div(id='hidden-div', style={'display': 'none'})
 ])
 
-@app_dash.callback(
+# ------------------------
+# Callback
+# ------------------------
+@app.callback(
     Output('payoff-graph', 'figure'),
-    [Input('slider_spot', 'value'),
+    [Input('spot_price', 'value'),
      Input('slider_volatility', 'value'),
      Input('slider_rate', 'value'),
      Input('slider_days', 'value')] +
@@ -159,42 +176,52 @@ app_dash.layout = html.Div([
     [Input(f'type_{i}', 'value') for i in range(4)] +
     [Input(f'pos_{i}', 'value') for i in range(4)]
 )
-def update_graph(spot_sim, vol, rate, days, *args):
+def update_graph(spot_price, vol, rate, days, *args):
     Ks = args[0:4]
     premiums = args[4:8]
     types = args[8:12]
     positions = args[12:16]
 
-    S_range = np.linspace(50, 150, 300)
     T = days / 365
     sigma = vol / 100
     r = rate / 100
+
+    # Range centrato ±75% del prezzo attuale
+    buffer = spot_price * 0.75
+    S_min = max(0, spot_price - buffer)
+    S_max = spot_price + buffer
+    S_range = np.linspace(S_min, S_max, 300)
 
     payoff = np.zeros_like(S_range)
     pnl = np.zeros_like(S_range)
 
     for i in range(4):
-        if Ks[i] is None or premiums[i] is None or types[i] is None or positions[i] is None:
+        if None in (Ks[i], premiums[i], types[i], positions[i]):
             continue
         K = Ks[i]
         premium = premiums[i]
         typ = types[i]
         qty = positions[i]
 
+        # Payoff a scadenza
         payoff_leg = np.maximum(S_range - K, 0) if typ == 'call' else np.maximum(K - S_range, 0)
         payoff += qty * (payoff_leg - premium)
 
+        # Valore teorico oggi (Black-Scholes)
         bs_leg = np.array([black_scholes(S, K, T, r, sigma, typ) for S in S_range])
         pnl += qty * (bs_leg - premium)
 
     fig = go.Figure()
     fig.add_trace(go.Scatter(x=S_range, y=pnl, mode='lines', name='P&L attuale'))
     fig.add_trace(go.Scatter(x=S_range, y=payoff, mode='lines', name='Payoff a scadenza', line=dict(dash='dot')))
+
     fig.update_layout(
         xaxis_title='Prezzo sottostante (€)',
         yaxis_title='Profitto / Perdita (€)',
         template='plotly_white',
-        hovermode='x unified'
+        hovermode='x unified',
+        xaxis=dict(range=[S_min, S_max]),
+        yaxis=dict(zeroline=True, zerolinewidth=2, zerolinecolor='gray')
     )
     return fig
 
