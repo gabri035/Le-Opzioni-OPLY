@@ -1,13 +1,18 @@
+
+
 <!DOCTYPE html>
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <title>Simulatore Opzioni</title>
+    <title>Homepage</title>
 </head>
 <body>
-    <h1>Benvenuto!</h1>
-    <p>Vai al <a href="/dash">Grafico interattivo delle opzioni</a>.</p>
-    <p>Vai al <a href="{{ url_for('option_chain') }}">Vai a Option Chain</a>
-    <p>Vai al <a href="{{ url_for('company_info') }}">Vai a Company Info</a>
+    <h1>Benvenuto nella piattaforma di analisi opzioni</h1>
+
+    <ul>
+        <li><a href="{{ url_for('company_info.company_info') }}">Info Azienda</a></li>
+        <li><a href="{{ url_for('option_chain.option_chain') }}">Option Chain</a></li>
+        <li><a href="/dash/">Strategia Opzioni (Dash)</a></li>
+    </ul>
 </body>
 </html>
