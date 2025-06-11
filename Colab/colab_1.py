@@ -33,11 +33,11 @@ period = "1d" # weekly, orario, giornaliero (default)
 data1 = yf.download(stocks1, start=start_date, end=end_date, period=period)
 data2 = yf.download(stocks2, start=start_date, end=end_date, period=period)
 
-# Estraiamo le chiusure
+# Estraiamo le chiusure giornaliere
 close1 = data1["Close"].squeeze()
 close2 = data2["Close"].squeeze()
 
-# Calcoliamo log-rendimenti
+# Calcoliamo log-rendimenti (variazioni tra un giorno e l'altro)
 log_returns1 = np.log(close1 / close1.shift(1)).dropna()
 log_returns2 = np.log(close2 / close2.shift(1)).dropna()
 
