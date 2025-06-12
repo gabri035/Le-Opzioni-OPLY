@@ -4,8 +4,50 @@
     <meta charset="UTF-8">
     <title>Option Chain - {{ ticker }}</title>
     <style>
-        .itm {
-            background-color: #ccffcc; /* verde chiaro */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            font-size: 14px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            table-layout: fixed;
+        }
+
+        th, td {
+            border: 1px solid #ccc;
+            padding: 4px 6px;
+            text-align: center;
+            font-size: 13px;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+        }
+
+        th {
+            background-color: #f0f0f0;
+            font-weight: bold;
+        }
+
+        .itm-call {
+            background-color: #ccffcc;
+        }
+
+        .itm-put {
+            background-color: #ffcccc;
+        }
+
+        input, select, button {
+            font-size: 14px;
+            margin: 4px 0;
+        }
+
+        h1, h2 {
+            font-size: 20px;
+            margin-bottom: 10px;
         }
     </style>
 </head>
@@ -15,7 +57,6 @@
     <form method="post">
         <label for="ticker">Ticker:</label>
         <input type="text" id="ticker" name="ticker" value="{{ ticker }}" required>
-        <br><br>
 
         {% if expiries %}
             <label for="expiry">Scadenza:</label>
@@ -25,47 +66,57 @@
                     <option value="{{ exp }}" {% if exp == expiry %}selected{% endif %}>{{ exp }}</option>
                 {% endfor %}
             </select>
-            <br><br>
-            <button type="submit">Mostra Option Chain</button>
+            <button type="submit">Mostra</button>
         {% else %}
             <button type="submit">Cerca Scadenze</button>
         {% endif %}
     </form>
 
     {% if option_data %}
-        <h2>Call Options</h2>
-        <table border="1">
+        <h2>Option Chain - {{ expiry }}</h2>
+        <table>
             <tr>
+                <th colspan="3">CALL</th>
+                <th>Strike</th>
+                <th colspan="3">PUT</th>
+            </tr>
+            <tr>
+                <th>Bid</th>
+                <th>Ask</th>
+                <th>Vol</th>
                 <th>Strike</th>
                 <th>Bid</th>
                 <th>Ask</th>
-                <th>Volume</th>
+                <th>Vol</th>
             </tr>
-            {% for option in option_data.calls %}
-            <tr class="{% if option.inTheMoney %}itm{% endif %}">
-                <td>{{ option.strike }}</td>
-                <td>{{ option.bid }}</td>
-                <td>{{ option.ask }}</td>
-                <td>{{ option.volume }}</td>
-            </tr>
-            {% endfor %}
-        </table>
 
-        <h2>Put Options</h2>
-        <table border="1">
-            <tr>
-                <th>Strike</th>
-                <th>Bid</th>
-                <th>Ask</th>
-                <th>Volume</th>
-            </tr>
-            {% for option in option_data.puts %}
-            <tr class="{% if option.inTheMoney %}itm{% endif %}">
-                <td>{{ option.strike }}</td>
-                <td>{{ option.bid }}</td>
-                <td>{{ option.ask }}</td>
-                <td>{{ option.volume }}</td>
-            </tr>
+            {% set call_map = {} %}
+            {% set put_map = {} %}
+
+            {% for c in option_data.calls %}
+                {% set _ = call_map.update({ c.strike: c }) %}
+            {% endfor %}
+            {% for p in option_data.puts %}
+                {% set _ = put_map.update({ p.strike: p }) %}
+            {% endfor %}
+
+            {% set all_strikes = call_map.keys() | list + put_map.keys() | list %}
+            {% set unique_strikes = all_strikes | unique | sort %}
+
+            {% for strike in unique_strikes %}
+                {% set call = call_map.get(strike) %}
+                {% set put = put_map.get(strike) %}
+                <tr>
+                    <td class="{% if call and call.inTheMoney %}itm-call{% endif %}">{{ call.bid if call else '' }}</td>
+                    <td class="{% if call and call.inTheMoney %}itm-call{% endif %}">{{ call.ask if call else '' }}</td>
+                    <td class="{% if call and call.inTheMoney %}itm-call{% endif %}">{{ call.volume if call else '' }}</td>
+
+                    <td><strong>{{ strike }}</strong></td>
+
+                    <td class="{% if put and put.inTheMoney %}itm-put{% endif %}">{{ put.bid if put else '' }}</td>
+                    <td class="{% if put and put.inTheMoney %}itm-put{% endif %}">{{ put.ask if put else '' }}</td>
+                    <td class="{% if put and put.inTheMoney %}itm-put{% endif %}">{{ put.volume if put else '' }}</td>
+                </tr>
             {% endfor %}
         </table>
     {% endif %}
@@ -74,3 +125,5 @@
     <a href="/">Torna alla Home</a>
 </body>
 </html>
+
+
