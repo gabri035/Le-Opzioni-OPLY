@@ -2,7 +2,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from datetime import datetime
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 import pandas as pd
 import yfinance as yf
 import numpy as np
@@ -15,6 +15,7 @@ import matplotlib.gridspec as gridspec
 import base64
 import io
 from Colab.funzioni import analisi_comparata_completa_con_asimmetria_graduale, analisi_statistiche, analisi_statistiche_TAB
+from options_utils import black_scholes, black_scholes_greeks
 
 app = FastAPI(title="Stock Analysis API", description="API for stock analysis and cointegration", version="1.0.0")
 
@@ -32,6 +33,34 @@ class CointegrationRequest(BaseModel):
     end_date: str
     period: Optional[str] = "1d"
 
+class CompanyInfoRequest(BaseModel):
+    ticker: str
+
+class OptionChainRequest(BaseModel):
+    ticker: str
+    expiry: Optional[str] = None
+
+class BlackScholesRequest(BaseModel):
+    S: float  # Current stock price
+    K: float  # Strike price
+    T: float  # Time to expiration (in years)
+    r: float  # Risk-free rate
+    sigma: float  # Volatility
+    option_type: str = 'call'  # 'call' or 'put'
+
+class OptionLeg(BaseModel):
+    strike: float
+    premium: float
+    option_type: str  # 'call' or 'put'
+    position: int     # 1 for buy, -1 for sell
+    
+class OptionsStrategyRequest(BaseModel):
+    spot_price: float
+    volatility: float  # in percentage
+    rate: float       # in percentage
+    days_to_expiry: int
+    options: List[OptionLeg]
+
 def download_stock_data(stocks, start_date, end_date, period="1d"):
     """Download stock data with error handling"""
     data = yf.download(stocks, start=start_date, end=end_date, period=period)
@@ -48,9 +77,15 @@ def plot_to_base64(fig):
     plt.close(fig)
     return image_base64
 
+
+
 @app.get("/")
 async def root():
-    return {"message": "Stock Analysis API", "version": "1.0.0"}
+    return {"message": "Stock Analysis API", "version": "1.0.0", "status": "healthy"}
+
+@app.get("/health")
+async def health_check():
+    return {"status": "healthy", "timestamp": datetime.now().isoformat()}
 
 @app.post("/analysis/comparative")
 async def comparative_analysis(request: StockAnalysisRequest):
@@ -421,6 +456,175 @@ async def cointegration_plots(request: CointegrationRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.post("/company/info")
+async def get_company_info(request: CompanyInfoRequest):
+    """Get comprehensive company information"""
+    try:
+        ticker = yf.Ticker(request.ticker)
+        info = ticker.info
+        officers = info.get('companyOfficers', [])
+        executives = [o for o in officers if 'CEO' in o.get('title', '') or 'CFO' in o.get('title', '')]
+
+        return {
+            "ticker": request.ticker,
+            "basic_info": {
+                "shortName": info.get('shortName'),
+                "longName": info.get('longName'),
+                "country": info.get('country'),
+                "industry": info.get('industry'),
+                "sector": info.get('sector'),
+                "longBusinessSummary": info.get('longBusinessSummary'),
+                "fullTimeEmployees": info.get('fullTimeEmployees'),
+                "exchange": info.get('exchange')
+            },
+            "price_data": {
+                "previousClose": info.get('previousClose'),
+                "open": info.get('open'),
+                "dayLow": info.get('dayLow'),
+                "dayHigh": info.get('dayHigh'),
+                "fiftyTwoWeekLow": info.get('fiftyTwoWeekLow'),
+                "fiftyTwoWeekHigh": info.get('fiftyTwoWeekHigh'),
+                "twoHundredDayAverage": info.get('twoHundredDayAverage'),
+                "marketCap": info.get('marketCap'),
+                "marketState": info.get('marketState')
+            },
+            "dividend_info": {
+                "dividendRate": info.get('dividendRate'),
+                "dividendYield": info.get('dividendYield'),
+                "fiveYearAvgDividendYield": info.get('fiveYearAvgDividendYield'),
+                "trailingAnnualDividendRate": info.get('trailingAnnualDividendRate')
+            },
+            "executives": executives
+        }
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Failed to fetch company info: {str(e)}")
+
+@app.post("/options/chain")
+async def get_option_chain(request: OptionChainRequest):
+    """Get option chain data for a specific ticker and expiry"""
+    try:
+        stock = yf.Ticker(request.ticker)
+        expiries = stock.options
+        
+        if not expiries:
+            raise HTTPException(status_code=404, detail="No options available for this ticker")
+        
+        result = {
+            "ticker": request.ticker,
+            "available_expiries": list(expiries)
+        }
+        
+        if request.expiry:
+            if request.expiry not in expiries:
+                raise HTTPException(status_code=400, detail=f"Expiry {request.expiry} not available")
+            
+            options = stock.option_chain(request.expiry)
+            result["expiry"] = request.expiry
+            result["calls"] = options.calls.to_dict(orient='records')
+            result["puts"] = options.puts.to_dict(orient='records')
+        
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Failed to fetch option chain: {str(e)}")
+
+@app.post("/options/blackscholes")
+async def calculate_black_scholes(request: BlackScholesRequest):
+    """Calculate Black-Scholes option price and Greeks"""
+    try:
+        price = black_scholes(request.S, request.K, request.T, request.r, request.sigma, request.option_type)
+        greeks = black_scholes_greeks(request.S, request.K, request.T, request.r, request.sigma, request.option_type)
+        
+        return {
+            "parameters": {
+                "spot_price": request.S,
+                "strike_price": request.K,
+                "time_to_expiry": request.T,
+                "risk_free_rate": request.r,
+                "volatility": request.sigma,
+                "option_type": request.option_type
+            },
+            "option_price": price,
+            "greeks": greeks
+        }
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Failed to calculate Black-Scholes: {str(e)}")
+
+@app.post("/options/strategy")
+async def simulate_options_strategy(request: OptionsStrategyRequest):
+    """Simulate options strategy with payoff and Greeks"""
+    try:
+        T = request.days_to_expiry / 365  # Convert days to years
+        sigma = request.volatility / 100
+        r = request.rate / 100
+        
+        # Create price range for simulation
+        buffer = request.spot_price * 0.75
+        S_min = max(0, request.spot_price - buffer)
+        S_max = request.spot_price + buffer
+        S_range = np.linspace(S_min, S_max, 100)
+        
+        # Initialize arrays
+        payoff_at_expiry = np.zeros_like(S_range)
+        current_pnl = np.zeros_like(S_range)
+        
+        # Initialize total greeks
+        total_greeks = {'delta': 0, 'gamma': 0, 'vega': 0, 'theta': 0, 'rho': 0}
+        
+        strategy_details = []
+        
+        for option in request.options:
+            # Calculate greeks at current spot
+            greeks = black_scholes_greeks(request.spot_price, option.strike, T, r, sigma, option.option_type)
+            
+            # Add to total greeks (weighted by position)
+            for key in total_greeks:
+                total_greeks[key] += option.position * greeks[key]
+            
+            # Payoff at expiry
+            if option.option_type == 'call':
+                payoff_leg = np.maximum(S_range - option.strike, 0)
+            else:
+                payoff_leg = np.maximum(option.strike - S_range, 0)
+            
+            payoff_at_expiry += option.position * (payoff_leg - option.premium)
+            
+            # Current theoretical value (Black-Scholes)
+            bs_values = np.array([black_scholes(S, option.strike, T, r, sigma, option.option_type) for S in S_range])
+            current_pnl += option.position * (bs_values - option.premium)
+            
+            strategy_details.append({
+                "strike": option.strike,
+                "premium": option.premium,
+                "type": option.option_type,
+                "position": "Long" if option.position > 0 else "Short",
+                "quantity": abs(option.position),
+                "greeks": greeks
+            })
+        
+        return {
+            "strategy_parameters": {
+                "spot_price": request.spot_price,
+                "volatility_pct": request.volatility,
+                "rate_pct": request.rate,
+                "days_to_expiry": request.days_to_expiry
+            },
+            "strategy_details": strategy_details,
+            "total_greeks": total_greeks,
+            "simulation": {
+                "price_range": S_range.tolist(),
+                "payoff_at_expiry": payoff_at_expiry.tolist(),
+                "current_pnl": current_pnl.tolist()
+            },
+            "max_profit": float(np.max(payoff_at_expiry)) if np.max(payoff_at_expiry) < np.inf else "Unlimited",
+            "max_loss": float(np.min(payoff_at_expiry)) if np.min(payoff_at_expiry) > -np.inf else "Unlimited",
+            "breakeven_points": []  # Could calculate specific breakeven points if needed
+        }
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Failed to simulate strategy: {str(e)}")
+
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000) 
+    import os
+    
+    port = int(os.environ.get("PORT", 8000))
+    uvicorn.run(app, host="0.0.0.0", port=port) 
