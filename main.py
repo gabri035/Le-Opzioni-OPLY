@@ -85,7 +85,13 @@ async def root():
 
 @app.get("/health")
 async def health_check():
-    return {"status": "healthy", "timestamp": datetime.now().isoformat()}
+    """Lightweight health check endpoint for Render"""
+    return {"status": "healthy", "timestamp": datetime.now().isoformat(), "port": "ready"}
+
+@app.get("/ready")
+async def readiness_check():
+    """Readiness probe for container orchestration"""
+    return {"status": "ready", "service": "Stock Analysis API"}
 
 @app.post("/analysis/comparative")
 async def comparative_analysis(request: StockAnalysisRequest):
