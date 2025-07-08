@@ -315,7 +315,7 @@ export default function PairsTrading() {
             </div>
 
             {/* Visualizations */}
-            {results.visualizations && (
+            {results.visualizations && results.visualizations.charts && results.visualizations.charts.comprehensive_analysis && (
               <div className="bg-white rounded-xl shadow-lg p-6">
                 <h3 className="text-2xl font-bold text-gray-900 mb-6">Price and Returns Analysis</h3>
                 <div className="text-center">
@@ -331,7 +331,7 @@ export default function PairsTrading() {
             )}
 
             {/* Cointegration Analysis */}
-            {results.cointegration && (
+            {results.cointegration && results.cointegration.regression_analysis && (
               <div className="bg-white rounded-xl shadow-lg p-6">
                 <h3 className="text-2xl font-bold text-gray-900 mb-6">Cointegration Analysis</h3>
                 
@@ -343,15 +343,15 @@ export default function PairsTrading() {
                     <div className="space-y-2 text-sm">
                       <div className="flex justify-between">
                         <span>R²:</span>
-                        <span className="font-mono">{results.cointegration.regression_analysis.model1.r_squared?.toFixed(4)}</span>
+                        <span className="font-mono">{results.cointegration.regression_analysis.model1?.r_squared?.toFixed(4)}</span>
                       </div>
                       <div className="flex justify-between">
                         <span>ADF Statistic:</span>
-                        <span className="font-mono">{results.cointegration.regression_analysis.model1.adf_statistic?.toFixed(4)}</span>
+                        <span className="font-mono">{results.cointegration.regression_analysis.model1?.adf_statistic?.toFixed(4)}</span>
                       </div>
                       <div className="flex justify-between">
                         <span>p-value:</span>
-                        <span className="font-mono">{results.cointegration.regression_analysis.model1.adf_p_value?.toFixed(6)}</span>
+                        <span className="font-mono">{results.cointegration.regression_analysis.model1?.adf_p_value?.toFixed(6)}</span>
                       </div>
                     </div>
                   </div>
@@ -363,15 +363,15 @@ export default function PairsTrading() {
                     <div className="space-y-2 text-sm">
                       <div className="flex justify-between">
                         <span>R²:</span>
-                        <span className="font-mono">{results.cointegration.regression_analysis.model2.r_squared?.toFixed(4)}</span>
+                        <span className="font-mono">{results.cointegration.regression_analysis.model2?.r_squared?.toFixed(4)}</span>
                       </div>
                       <div className="flex justify-between">
                         <span>ADF Statistic:</span>
-                        <span className="font-mono">{results.cointegration.regression_analysis.model2.adf_statistic?.toFixed(4)}</span>
+                        <span className="font-mono">{results.cointegration.regression_analysis.model2?.adf_statistic?.toFixed(4)}</span>
                       </div>
                       <div className="flex justify-between">
                         <span>p-value:</span>
-                        <span className="font-mono">{results.cointegration.regression_analysis.model2.adf_p_value?.toFixed(6)}</span>
+                        <span className="font-mono">{results.cointegration.regression_analysis.model2?.adf_p_value?.toFixed(6)}</span>
                       </div>
                     </div>
                   </div>
@@ -388,40 +388,40 @@ export default function PairsTrading() {
             )}
 
             {/* Regression Plots */}
-            {results.cointegrationPlots && (
+            {results.cointegrationPlots && results.cointegrationPlots.regression_plots && (
               <div className="bg-white rounded-xl shadow-lg p-6">
                 <h3 className="text-2xl font-bold text-gray-900 mb-6">Regression Analysis Plots</h3>
                 
                 <div className="grid lg:grid-cols-2 gap-6">
                   <div>
                     <h4 className="text-lg font-semibold text-gray-800 mb-3">
-                      {results.cointegrationPlots.regression_plots.plot1.title}
+                      {results.cointegrationPlots.regression_plots.plot1?.title}
                     </h4>
                     <Image
-                      src={`data:image/png;base64,${results.cointegrationPlots.regression_plots.plot1.image}`}
+                      src={`data:image/png;base64,${results.cointegrationPlots.regression_plots.plot1?.image}`}
                       alt="Regression Plot 1"
                       width={500}
                       height={400}
                       className="w-full rounded-lg shadow-md"
                     />
                     <p className="text-sm text-gray-600 mt-2">
-                      R² = {results.cointegrationPlots.regression_plots.plot1.r_squared?.toFixed(4)}
+                      R² = {results.cointegrationPlots.regression_plots.plot1?.r_squared?.toFixed(4)}
                     </p>
                   </div>
 
                   <div>
                     <h4 className="text-lg font-semibold text-gray-800 mb-3">
-                      {results.cointegrationPlots.regression_plots.plot2.title}
+                      {results.cointegrationPlots.regression_plots.plot2?.title}
                     </h4>
                     <Image
-                      src={`data:image/png;base64,${results.cointegrationPlots.regression_plots.plot2.image}`}
+                      src={`data:image/png;base64,${results.cointegrationPlots.regression_plots.plot2?.image}`}
                       alt="Regression Plot 2"
                       width={500}
                       height={400}
                       className="w-full rounded-lg shadow-md"
                     />
                     <p className="text-sm text-gray-600 mt-2">
-                      R² = {results.cointegrationPlots.regression_plots.plot2.r_squared?.toFixed(4)}
+                      R² = {results.cointegrationPlots.regression_plots.plot2?.r_squared?.toFixed(4)}
                     </p>
                   </div>
                 </div>
