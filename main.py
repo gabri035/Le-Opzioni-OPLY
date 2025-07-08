@@ -1,5 +1,6 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import JSONResponse
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from datetime import datetime
 from typing import List, Optional, Dict, Any
@@ -18,6 +19,19 @@ from Colab.funzioni import analisi_comparata_completa_con_asimmetria_graduale, a
 from options_utils import black_scholes, black_scholes_greeks
 
 app = FastAPI(title="Stock Analysis API", description="API for stock analysis and cointegration", version="1.0.0")
+
+# Configure CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "https://le-opzioni.vercel.app",  # Your Vercel frontend
+        "http://localhost:3000",          # Local development
+        "https://localhost:3000",         # Local development with HTTPS
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 class StockAnalysisRequest(BaseModel):
     stocks1: List[str]
