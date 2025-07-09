@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { apiService, OptionChainRequest } from '@/lib/api';
-import { BarChart3, Calendar, Search, Loader2 } from 'lucide-react';
+import { BarChart3, Search, Loader2 } from 'lucide-react';
 
 interface OptionInfo {
   strike: number;
@@ -20,6 +20,14 @@ interface OptionData {
   expiry?: string;
   calls?: OptionInfo[];
   puts?: OptionInfo[];
+}
+
+interface ApiError {
+  response?: {
+    data?: {
+      detail?: string;
+    };
+  };
 }
 
 export default function OptionChain() {
@@ -45,8 +53,11 @@ export default function OptionChain() {
       const requestData: OptionChainRequest = { ticker: formData.ticker };
       const response = await apiService.getOptionChain(requestData);
       setOptionData(response.data);
-    } catch (err: any) {
-      const errorMessage = err.response?.data?.detail || 'An error occurred while fetching expiry dates.';
+    } catch (err: unknown) {
+      const apiError = err as ApiError;
+      const errorMessage =
+        apiError.response?.data?.detail ||
+        'An error occurred while fetching expiry dates.';
       setError(errorMessage);
     } finally {
       setLoading(false);
@@ -59,8 +70,8 @@ export default function OptionChain() {
 
     if (!newExpiry) {
       if (optionData) {
-        const { calls, puts, ...rest } = optionData;
-        setOptionData(rest);
+        const { available_expiries, ticker } = optionData;
+        setOptionData({ available_expiries, ticker });
       }
       return;
     }
@@ -73,8 +84,11 @@ export default function OptionChain() {
       const requestData: OptionChainRequest = { ticker: formData.ticker, expiry: newExpiry };
       const response = await apiService.getOptionChain(requestData);
       setOptionData(response.data);
-    } catch (err: any) {
-      const errorMessage = err.response?.data?.detail || 'An error occurred while fetching the option chain.';
+    } catch (err: unknown) {
+      const apiError = err as ApiError;
+      const errorMessage =
+        apiError.response?.data?.detail ||
+        'An error occurred while fetching the option chain.';
       setError(errorMessage);
     } finally {
       setLoading(false);

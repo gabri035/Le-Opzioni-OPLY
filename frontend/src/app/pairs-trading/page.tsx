@@ -104,7 +104,7 @@ export default function PairsTrading() {
       .then(response => {
         setResults(prev => ({ ...prev, comparative: response.data }));
       })
-      .catch(err => {
+      .catch(() => {
         setError(prev => (prev ? prev + "\n" : "") + "Comparative analysis failed.");
       });
 
@@ -112,7 +112,7 @@ export default function PairsTrading() {
       .then(response => {
         setResults(prev => ({ ...prev, visualizations: response.data }));
       })
-      .catch(err => {
+      .catch(() => {
         setError(prev => (prev ? prev + "\n" : "") + "Visualization chart failed.");
       });
 
@@ -120,7 +120,7 @@ export default function PairsTrading() {
       .then(response => {
         setResults(prev => ({ ...prev, cointegration: response.data }));
       })
-      .catch(err => {
+      .catch(() => {
         setError(prev => (prev ? prev + "\n" : "") + "Cointegration analysis failed.");
       });
 
@@ -128,7 +128,7 @@ export default function PairsTrading() {
       .then(response => {
         setResults(prev => ({ ...prev, cointegrationPlots: response.data }));
       })
-      .catch(err => {
+      .catch(() => {
         setError(prev => (prev ? prev + "\n" : "") + "Regression plots failed.");
       });
 
