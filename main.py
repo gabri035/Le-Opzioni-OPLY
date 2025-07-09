@@ -24,9 +24,9 @@ app = FastAPI(title="Stock Analysis API", description="API for stock analysis an
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "https://le-opzioni.vercel.app",  # Your Vercel frontend
-        "http://localhost:3000",          # Local development
-        "https://localhost:3000",         # Local development with HTTPS
+        "https://oply.vercel.app",
+        "http://localhost:3000",
+        "https://localhost:3000",
     ],
     allow_credentials=True,
     allow_methods=["*"],
