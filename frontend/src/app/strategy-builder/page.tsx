@@ -139,6 +139,7 @@ export default function StrategyBuilder() {
         {/* Strategy Configuration */}
         <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
           <h2 className="text-2xl font-bold text-gray-900 mb-6">Strategy Parameters</h2>
+          <h3 className="text-lg text-gray-900 mb-6">Remember to run a new simulation when you change the parameters</h3>
           
           <form onSubmit={handleSubmit} className="space-y-6">
             
@@ -323,23 +324,23 @@ export default function StrategyBuilder() {
               <h3 className="text-2xl font-bold text-gray-900 mb-6">Strategy Summary</h3>
               
               <div className="grid md:grid-cols-4 gap-6">
-                <div className="bg-green-50 rounded-lg p-4">
+                <div className="bg-green-50 rounded-lg p-4 border border-green-300 border-2">
                   <h4 className="text-lg font-semibold text-green-900 mb-2">Max Profit</h4>
                   <p className="text-2xl font-bold text-green-800">
                     {typeof results.max_profit === 'number' ? `$${results.max_profit.toFixed(2)}` : results.max_profit}
                   </p>
                 </div>
-                <div className="bg-red-50 rounded-lg p-4">
+                <div className="bg-red-50 rounded-lg p-4 border border-red-300 border-2">
                   <h4 className="text-lg font-semibold text-red-900 mb-2">Max Loss</h4>
                   <p className="text-2xl font-bold text-red-800">
                     {typeof results.max_loss === 'number' ? `$${results.max_loss.toFixed(2)}` : results.max_loss}
                   </p>
                 </div>
-                <div className="bg-blue-50 rounded-lg p-4">
+                <div className="bg-blue-50 rounded-lg p-4 border border-blue-300 border-2">
                   <h4 className="text-lg font-semibold text-blue-900 mb-2">Current Spot</h4>
                   <p className="text-2xl font-bold text-blue-800">${formData.spotPrice}</p>
                 </div>
-                <div className="bg-purple-50 rounded-lg p-4">
+                <div className="bg-purple-50 rounded-lg p-4 border border-purple-300 border-2">
                   <h4 className="text-lg font-semibold text-purple-900 mb-2">Days to Expiry</h4>
                   <p className="text-2xl font-bold text-purple-800">{formData.daysToExpiry}</p>
                 </div>

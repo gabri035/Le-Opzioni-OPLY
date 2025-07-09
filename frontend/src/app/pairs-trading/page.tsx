@@ -233,8 +233,8 @@ export default function PairsTrading() {
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                 >
                   <option value="1d">Daily (1D)</option>
-                  <option value="1wk">Weekly (1W)</option>
-                  <option value="1h">Hourly (1H)</option>
+                  <option value="5d">Weekly (5D)</option>
+                  <option value="1mo">Monthly (1M)</option>
                 </select>
               </div>
             </div>
@@ -372,7 +372,7 @@ export default function PairsTrading() {
               {results.cointegration ? (
                 <>
                   <div className="grid md:grid-cols-2 gap-6">
-                    <div className="bg-green-50 rounded-lg p-4">
+                    <div className="bg-green-50 rounded-lg p-4 border border-green-300 border-2">
                       <h4 className="text-lg font-semibold text-green-900 mb-3">
                         {formData.ticker2} ~ {formData.ticker1}
                       </h4>
@@ -392,7 +392,7 @@ export default function PairsTrading() {
                       </div>
                     </div>
 
-                    <div className="bg-blue-50 rounded-lg p-4">
+                    <div className="bg-blue-50 rounded-lg p-4 border border-blue-300 border-2">
                       <h4 className="text-lg font-semibold text-blue-900 mb-3">
                         {formData.ticker1} ~ {formData.ticker2}
                       </h4>
@@ -414,7 +414,7 @@ export default function PairsTrading() {
                   </div>
 
                   {/* Cointegration Conclusion */}
-                  <div className="mt-6 bg-yellow-50 rounded-lg p-4">
+                  <div className="mt-6 bg-yellow-100 rounded-lg p-4 border border-yellow-300 border-2">
                     <h4 className="text-lg font-semibold text-yellow-900 mb-2">Cointegration Test Result</h4>
                     <p className="text-yellow-800">
                       {results.cointegration.cointegration_results.interpretation}

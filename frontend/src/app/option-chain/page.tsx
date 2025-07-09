@@ -146,7 +146,7 @@ export default function OptionChain() {
               {/* Expiry Date */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Expiry Date (Optional)
+                  Expiry Date
                 </label>
                 <select
                   value={formData.expiry}
