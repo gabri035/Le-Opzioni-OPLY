@@ -29,29 +29,56 @@ export default function OptionChain() {
   });
 
   const [loading, setLoading] = useState(false);
+  const [loadingMessage, setLoadingMessage] = useState('');
   const [optionData, setOptionData] = useState<OptionData | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleFetchExpiries = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setLoadingMessage('Fetching available expiry dates...');
     setError(null);
+    setOptionData(null);
+    setFormData(prev => ({ ...prev, expiry: '' }));
 
     try {
-      const requestData: OptionChainRequest = {
-        ticker: formData.ticker,
-        expiry: formData.expiry || undefined
-      };
-
+      const requestData: OptionChainRequest = { ticker: formData.ticker };
       const response = await apiService.getOptionChain(requestData);
       setOptionData(response.data);
-    } catch (err: unknown) {
-      const errorMessage = err instanceof Error && 'response' in err && err.response 
-        ? (err.response as { data?: { detail?: string } }).data?.detail || 'An error occurred while fetching option chain'
-        : 'An error occurred while fetching option chain';
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.detail || 'An error occurred while fetching expiry dates.';
       setError(errorMessage);
     } finally {
       setLoading(false);
+      setLoadingMessage('');
+    }
+  };
+
+  const handleExpiryChange = async (newExpiry: string) => {
+    setFormData(prev => ({ ...prev, expiry: newExpiry }));
+
+    if (!newExpiry) {
+      if (optionData) {
+        const { calls, puts, ...rest } = optionData;
+        setOptionData(rest);
+      }
+      return;
+    }
+
+    setLoading(true);
+    setLoadingMessage(`Fetching option chain for ${newExpiry}...`);
+    setError(null);
+    
+    try {
+      const requestData: OptionChainRequest = { ticker: formData.ticker, expiry: newExpiry };
+      const response = await apiService.getOptionChain(requestData);
+      setOptionData(response.data);
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.detail || 'An error occurred while fetching the option chain.';
+      setError(errorMessage);
+    } finally {
+      setLoading(false);
+      setLoadingMessage('');
     }
   };
 
@@ -84,7 +111,7 @@ export default function OptionChain() {
         <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
           <h2 className="text-2xl font-bold text-gray-900 mb-6">Option Chain Parameters</h2>
           
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleFetchExpiries} className="space-y-6">
             <div className="grid md:grid-cols-3 gap-4">
               
               {/* Ticker */}
@@ -109,7 +136,7 @@ export default function OptionChain() {
                 </label>
                 <select
                   value={formData.expiry}
-                  onChange={(e) => setFormData({...formData, expiry: e.target.value})}
+                  onChange={(e) => handleExpiryChange(e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                   disabled={!optionData?.available_expiries?.length}
                 >
@@ -130,7 +157,7 @@ export default function OptionChain() {
                   {loading ? (
                     <>
                       <Loader2 className="h-5 w-5 animate-spin" />
-                      <span>Loading...</span>
+                      <span>{loadingMessage || 'Loading...'}</span>
                     </>
                   ) : (
                     <>
@@ -149,37 +176,6 @@ export default function OptionChain() {
           <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-8">
             <div className="text-red-800">
               <strong>Error:</strong> {error}
-            </div>
-          </div>
-        )}
-
-        {/* Available Expiries */}
-        {optionData && optionData.available_expiries && (
-          <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
-            <h3 className="text-xl font-bold text-gray-900 mb-4">
-              <Calendar className="inline-block mr-2 h-5 w-5 text-blue-600" />
-              Available Expiry Dates for {optionData.ticker}
-            </h3>
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2">
-              {optionData.available_expiries.map((date) => (
-                <button
-                  key={date}
-                  onClick={() => {
-                    setFormData({...formData, expiry: date});
-                    // Auto-submit when expiry is selected
-                    const submitEvent = { preventDefault: () => {} } as React.FormEvent;
-                    setFormData(prev => ({...prev, expiry: date}));
-                    setTimeout(() => handleSubmit(submitEvent), 100);
-                  }}
-                  className={`px-3 py-2 text-sm rounded-lg border ${
-                    formData.expiry === date
-                      ? 'bg-green-100 border-green-500 text-green-800'
-                      : 'bg-gray-50 border-gray-300 text-gray-700 hover:bg-gray-100'
-                  }`}
-                >
-                  {date}
-                </button>
-              ))}
             </div>
           </div>
         )}

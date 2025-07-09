@@ -539,9 +539,14 @@ async def get_option_chain(request: OptionChainRequest):
                 raise HTTPException(status_code=400, detail=f"Expiry {request.expiry} not available")
             
             options = stock.option_chain(request.expiry)
+            
+            # Replace NaN with None for JSON compatibility
+            calls_df = options.calls.replace({np.nan: None})
+            puts_df = options.puts.replace({np.nan: None})
+
             result["expiry"] = request.expiry
-            result["calls"] = options.calls.to_dict(orient='records')
-            result["puts"] = options.puts.to_dict(orient='records')
+            result["calls"] = calls_df.to_dict(orient='records')
+            result["puts"] = puts_df.to_dict(orient='records')
         
         return result
     except Exception as e:

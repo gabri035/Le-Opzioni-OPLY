@@ -25,11 +25,7 @@ interface ComparativeResults {
 }
 
 interface VisualizationResults {
-  charts: {
-    comprehensive_analysis: {
-      image: string;
-    };
-  };
+  visualization: string;
 }
 
 interface RegressionModel {
@@ -49,6 +45,7 @@ interface CointegrationResults {
 interface RegressionPlot {
   title: string;
   image: string;
+  r_squared: number;
 }
 
 interface CointegrationPlotResults {
@@ -108,7 +105,6 @@ export default function PairsTrading() {
         setResults(prev => ({ ...prev, comparative: response.data }));
       })
       .catch(err => {
-        console.error("Error fetching comparative analysis:", err);
         setError(prev => (prev ? prev + "\n" : "") + "Comparative analysis failed.");
       });
 
@@ -117,7 +113,6 @@ export default function PairsTrading() {
         setResults(prev => ({ ...prev, visualizations: response.data }));
       })
       .catch(err => {
-        console.error("Error fetching visualizations:", err);
         setError(prev => (prev ? prev + "\n" : "") + "Visualization chart failed.");
       });
 
@@ -126,7 +121,6 @@ export default function PairsTrading() {
         setResults(prev => ({ ...prev, cointegration: response.data }));
       })
       .catch(err => {
-        console.error("Error fetching cointegration analysis:", err);
         setError(prev => (prev ? prev + "\n" : "") + "Cointegration analysis failed.");
       });
 
@@ -135,7 +129,6 @@ export default function PairsTrading() {
         setResults(prev => ({ ...prev, cointegrationPlots: response.data }));
       })
       .catch(err => {
-        console.error("Error fetching cointegration plots:", err);
         setError(prev => (prev ? prev + "\n" : "") + "Regression plots failed.");
       });
 
@@ -285,10 +278,10 @@ export default function PairsTrading() {
             <div className="bg-white rounded-xl shadow-lg p-6">
               <h3 className="text-2xl font-bold text-gray-900 mb-6">Price and Returns Analysis</h3>
               {loading && !results.visualizations && <LoadingSpinner />}
-              {results.visualizations && results.visualizations.charts?.comprehensive_analysis ? (
+              {results.visualizations && results.visualizations.visualization ? (
                 <div className="text-center">
                   <Image
-                    src={`data:image/png;base64,${results.visualizations.charts.comprehensive_analysis.image}`}
+                    src={`data:image/png;base64,${results.visualizations.visualization}`}
                     alt="Comprehensive Analysis Charts"
                     width={800}
                     height={600}
