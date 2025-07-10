@@ -36,14 +36,15 @@ export default function OptionChain() {
     expiry: ''
   });
 
-  const [loading, setLoading] = useState(false);
+  const [expiriesLoading, setExpiriesLoading] = useState(false);
+  const [chainLoading, setChainLoading] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState('');
   const [optionData, setOptionData] = useState<OptionData | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const handleFetchExpiries = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
+    setExpiriesLoading(true);
     setLoadingMessage('Fetching available expiry dates...');
     setError(null);
     setOptionData(null);
@@ -60,7 +61,7 @@ export default function OptionChain() {
         'An error occurred while fetching expiry dates.';
       setError(errorMessage);
     } finally {
-      setLoading(false);
+      setExpiriesLoading(false);
       setLoadingMessage('');
     }
   };
@@ -76,7 +77,7 @@ export default function OptionChain() {
       return;
     }
 
-    setLoading(true);
+    setChainLoading(true);
     setLoadingMessage(`Fetching option chain for ${newExpiry}...`);
     setError(null);
     
@@ -91,7 +92,7 @@ export default function OptionChain() {
         'An error occurred while fetching the option chain.';
       setError(errorMessage);
     } finally {
-      setLoading(false);
+      setChainLoading(false);
       setLoadingMessage('');
     }
   };
@@ -126,63 +127,72 @@ export default function OptionChain() {
           <h2 className="text-2xl font-bold text-gray-900 mb-6">Option Chain Parameters</h2>
           
           <form onSubmit={handleFetchExpiries} className="space-y-6">
-            <div className="grid md:grid-cols-3 gap-4">
+            <div className="grid md:grid-cols-3 gap-4 items-end">
               
               {/* Ticker */}
-              <div>
+              <div className="md:col-span-2">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Ticker Symbol
                 </label>
                 <input
                   type="text"
                   value={formData.ticker}
-                  onChange={(e) => setFormData({...formData, ticker: e.target.value.toUpperCase()})}
+                  onChange={(e) => {
+                    setFormData({ticker: e.target.value.toUpperCase(), expiry: ''});
+                    setOptionData(null);
+                    setError(null);
+                  }}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                   placeholder="AAPL"
                   required
                 />
               </div>
 
-              {/* Expiry Date */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Expiry Date
-                </label>
-                <select
-                  value={formData.expiry}
-                  onChange={(e) => handleExpiryChange(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                  disabled={!optionData?.available_expiries?.length}
-                >
-                  <option value="">Select expiry date...</option>
-                  {optionData?.available_expiries?.map((date) => (
-                    <option key={date} value={date}>{date}</option>
-                  ))}
-                </select>
-              </div>
-
               {/* Submit Button */}
               <div className="flex items-end">
                 <button
                   type="submit"
-                  disabled={loading}
+                  disabled={expiriesLoading || chainLoading}
                   className="w-full bg-green-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-green-700 focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
                 >
-                  {loading ? (
+                  {expiriesLoading ? (
                     <>
                       <Loader2 className="h-5 w-5 animate-spin" />
-                      <span>{loadingMessage || 'Loading...'}</span>
+                      <span>Fetching...</span>
                     </>
                   ) : (
                     <>
                       <Search className="h-5 w-5" />
-                      <span>Get Options</span>
+                      <span>Get Expiries</span>
                     </>
                   )}
                 </button>
               </div>
             </div>
           </form>
+
+          {/* Expiry Dates Chips */}
+          {optionData?.available_expiries && optionData.available_expiries.length > 0 && (
+            <div className="mt-6 pt-6 border-t border-gray-200">
+              <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-3">Available Expiry Dates</h3>
+              <div className="flex flex-wrap gap-3">
+                {optionData.available_expiries.map((date) => (
+                  <button
+                    key={date}
+                    onClick={() => handleExpiryChange(date)}
+                    disabled={expiriesLoading || chainLoading}
+                    className={`px-4 py-2 rounded-full text-sm font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed ${
+                      formData.expiry === date
+                        ? 'bg-green-600 text-white shadow'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    {date}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Error Display */}
@@ -194,8 +204,16 @@ export default function OptionChain() {
           </div>
         )}
 
+        {/* Loading indicator for chain data */}
+        {chainLoading && (
+          <div className="flex justify-center items-center py-16">
+            <Loader2 className="h-8 w-8 animate-spin text-green-600" />
+            <p className="ml-3 text-gray-600">{loadingMessage}</p>
+          </div>
+        )}
+
         {/* Option Chain Data */}
-        {optionData && optionData.calls && optionData.puts && (
+        {optionData && optionData.calls && optionData.puts && !chainLoading && (
           <div className="space-y-8">
             
             {/* Calls */}
@@ -209,7 +227,7 @@ export default function OptionChain() {
                   <thead className="bg-green-50">
                     <tr>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Strike</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Price</th>
+                      {/* <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Price</th> */}
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Bid</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ask</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Volume</th>
@@ -223,9 +241,9 @@ export default function OptionChain() {
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                           ${formatNumber(option.strike)}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {/* <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                           ${formatNumber(option.lastPrice)}
-                        </td>
+                        </td> */}
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                           ${formatNumber(option.bid)}
                         </td>
@@ -259,7 +277,7 @@ export default function OptionChain() {
                   <thead className="bg-red-50">
                     <tr>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Strike</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Price</th>
+                      {/* <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Price</th> */}
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Bid</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ask</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Volume</th>
@@ -273,9 +291,9 @@ export default function OptionChain() {
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                           ${formatNumber(option.strike)}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {/* <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                           ${formatNumber(option.lastPrice)}
-                        </td>
+                        </td> */}
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                           ${formatNumber(option.bid)}
                         </td>
