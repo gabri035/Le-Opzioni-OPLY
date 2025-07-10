@@ -107,6 +107,27 @@ export default function OptionChain() {
     return value.toLocaleString();
   };
 
+  let combinedOptions: {
+    strike: number;
+    call: OptionInfo | undefined;
+    put: OptionInfo | undefined;
+  }[] = [];
+
+  if (optionData && optionData.calls && optionData.puts) {
+    const { calls, puts } = optionData;
+    const callStrikes = calls.map(c => c.strike);
+    const putStrikes = puts.map(p => p.strike);
+    const strikes = [...new Set([...callStrikes, ...putStrikes])];
+    strikes.sort((a, b) => a - b);
+
+    combinedOptions = strikes.map(strike => {
+      const call = calls.find(c => c.strike === strike);
+      const put = puts.find(p => p.strike === strike);
+      return { strike, call, put };
+    });
+  }
+
+
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -214,108 +235,62 @@ export default function OptionChain() {
 
         {/* Option Chain Data */}
         {optionData && optionData.calls && optionData.puts && !chainLoading && (
-          <div className="space-y-8">
+          <div className="bg-white rounded-xl shadow-lg p-6">
+            <h3 className="text-2xl font-bold text-gray-900 mb-6">
+              Option Chain - {optionData.ticker} ({optionData.expiry})
+            </h3>
             
-            {/* Calls */}
-            <div className="bg-white rounded-xl shadow-lg p-6">
-              <h3 className="text-2xl font-bold text-gray-900 mb-6">
-                Call Options - {optionData.ticker} ({optionData.expiry})
-              </h3>
-              
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-green-50">
+            <div>
+              <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Strike</th>
-                      {/* <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Price</th> */}
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Bid</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ask</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Volume</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Open Interest</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Implied Vol</th>
+                      <th colSpan={5} className="px-6 py-3 text-center text-xs font-medium text-green-700 uppercase tracking-wider bg-green-100">Calls</th>
+                      <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Strike</th>
+                      <th colSpan={5} className="px-6 py-3 text-center text-xs font-medium text-red-700 uppercase tracking-wider bg-red-100">Puts</th>
+                    </tr>
+                    <tr>
+                      {/* Calls */}
+                      <th className="px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Bid</th>
+                      <th className="px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Ask</th>
+                      <th className="px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Volume</th>
+                      <th className="px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Open Int</th>
+                      <th className="px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Implied Vol</th>
+                      
+                      <th className="px-2 py-3"></th>
+                      
+                      {/* Puts */}
+                      <th className="px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Bid</th>
+                      <th className="px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Ask</th>
+                      <th className="px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Volume</th>
+                      <th className="px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Open Int</th>
+                      <th className="px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Implied Vol</th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {optionData.calls?.slice(0, 20).map((option, index) => (
+                    {combinedOptions.slice(0, 40).map(({ strike, call, put }, index) => (
                       <tr key={index} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                          ${formatNumber(option.strike)}
+                        {/* Call data */}
+                        <td className="px-2 py-4 whitespace-nowrap text-sm text-gray-900 text-center">${formatNumber(call?.bid)}</td>
+                        <td className="px-2 py-4 whitespace-nowrap text-sm text-gray-900 text-center">${formatNumber(call?.ask)}</td>
+                        <td className="px-2 py-4 whitespace-nowrap text-sm text-gray-900 text-center">{formatVolume(call?.volume)}</td>
+                        <td className="px-2 py-4 whitespace-nowrap text-sm text-gray-900 text-center">{formatVolume(call?.openInterest)}</td>
+                        <td className="px-2 py-4 whitespace-nowrap text-sm text-gray-900 text-center">{call?.impliedVolatility ? (call.impliedVolatility * 100).toFixed(1) + '%' : 'N/A'}</td>
+                        
+                        <td className="px-2 py-4 whitespace-nowrap text-sm font-medium text-gray-900 bg-gray-100 text-center">
+                          ${formatNumber(strike)}
                         </td>
-                        {/* <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          ${formatNumber(option.lastPrice)}
-                        </td> */}
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          ${formatNumber(option.bid)}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          ${formatNumber(option.ask)}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {formatVolume(option.volume)}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {formatVolume(option.openInterest)}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {option.impliedVolatility ? (option.impliedVolatility * 100).toFixed(1) + '%' : 'N/A'}
-                        </td>
+                        
+                        {/* Put data */}
+                        <td className="px-2 py-4 whitespace-nowrap text-sm text-gray-900 text-center">${formatNumber(put?.bid)}</td>
+                        <td className="px-2 py-4 whitespace-nowrap text-sm text-gray-900 text-center">${formatNumber(put?.ask)}</td>
+                        <td className="px-2 py-4 whitespace-nowrap text-sm text-gray-900 text-center">{formatVolume(put?.volume)}</td>
+                        <td className="px-2 py-4 whitespace-nowrap text-sm text-gray-900 text-center">{formatVolume(put?.openInterest)}</td>
+                        <td className="px-2 py-4 whitespace-nowrap text-sm text-gray-900 text-center">{put?.impliedVolatility ? (put.impliedVolatility * 100).toFixed(1) + '%' : 'N/A'}</td>
                       </tr>
                     ))}
                   </tbody>
-                </table>
-              </div>
+              </table>
             </div>
-
-            {/* Puts */}
-            <div className="bg-white rounded-xl shadow-lg p-6">
-              <h3 className="text-2xl font-bold text-gray-900 mb-6">
-                Put Options - {optionData.ticker} ({optionData.expiry})
-              </h3>
-              
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-red-50">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Strike</th>
-                      {/* <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Price</th> */}
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Bid</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ask</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Volume</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Open Interest</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Implied Vol</th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {optionData.puts?.slice(0, 20).map((option, index) => (
-                      <tr key={index} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                          ${formatNumber(option.strike)}
-                        </td>
-                        {/* <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          ${formatNumber(option.lastPrice)}
-                        </td> */}
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          ${formatNumber(option.bid)}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          ${formatNumber(option.ask)}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {formatVolume(option.volume)}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {formatVolume(option.openInterest)}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {option.impliedVolatility ? (option.impliedVolatility * 100).toFixed(1) + '%' : 'N/A'}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
           </div>
         )}
 
