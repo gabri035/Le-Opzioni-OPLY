@@ -469,6 +469,11 @@ export default function PairsTrading() {
             {showRegressionPlots && (
               <div className="bg-white rounded-xl shadow-lg p-6">
                 <h3 className="text-2xl font-bold text-gray-900 mb-6">Regression Analysis Plots</h3>
+                <p className="text-sm text-gray-700 mb-6">
+                  Directional linear regression estimates the dependence of one asset on another; the coefficient of determination (R²) quantifies the proportion of variance explained by the model.
+                  <br/>
+                  Residuals —deviations from fitted values— highlight potential nonlinearity or unmodeled dynamics. Time series analysis of residuals helps assess mean-reverting behavior.
+                </p>
                 {loading && !results.cointegrationPlots && <LoadingSpinner />}
                 {results.cointegrationPlots ? (
                   <div className="grid lg:grid-cols-2 gap-6">
