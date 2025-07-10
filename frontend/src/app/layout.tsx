@@ -1,10 +1,14 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import Image from "next/image";
 import "./globals.css";
 
 export const metadata: Metadata = {
   title: "OPLY - Options & Pairs Trading Platform",
   description: "Advanced financial analysis platform for options strategies and pairs trading",
+  icons: {
+    icon: "/logo.png",
+  },
 };
 
 export default function RootLayout({
@@ -19,7 +23,10 @@ export default function RootLayout({
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between h-16">
               <div className="flex items-center">
-                <h1 className="text-2xl font-bold text-purple-600">OPLY</h1>
+                <Link href="/" className="flex items-center space-x-2">
+                  <Image src="/logo.png" alt="Oply Logo" width={40} height={40} />
+                  <h1 className="text-2xl font-bold text-gray-800">OPLY</h1>
+                </Link>
               </div>
               <div className="flex items-center space-x-8">
                 <Link href="/" className="text-gray-700 hover:text-purple-600 px-3 py-2 text-sm font-medium">
