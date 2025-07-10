@@ -29,7 +29,7 @@ export default function Home() {
                 <h3 className="text-2xl font-bold text-gray-900 mb-4">Pairs Trading</h3>
                 <p className="text-gray-600 mb-6">
                   Analyze correlations between stocks, perform cointegration tests, 
-                  and discover statistical arbitrage opportunities with comprehensive visualizations.
+                  and discover statistical-based opportunities with comprehensive visualizations.
                 </p>
                 <div className="text-sm text-purple-600 font-medium">
                   Input: Ticker 1 & 2, Date Range, Timeframe →

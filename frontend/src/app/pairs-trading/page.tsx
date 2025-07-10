@@ -153,7 +153,7 @@ export default function PairsTrading() {
             Pairs Trading Analysis
           </h1>
           <p className="text-lg text-gray-600 max-w-3xl mx-auto">
-            Analyze correlations between stocks, perform cointegration tests, and discover statistical arbitrage opportunities
+            Analyze correlations between stocks, perform cointegration tests, and discover statistical-based opportunities
           </p>
         </div>
 
@@ -279,15 +279,39 @@ export default function PairsTrading() {
               <h3 className="text-2xl font-bold text-gray-900 mb-6">Price and Returns Analysis</h3>
               {loading && !results.visualizations && <LoadingSpinner />}
               {results.visualizations && results.visualizations.visualization ? (
-                <div className="text-center">
-                  <Image
-                    src={`data:image/png;base64,${results.visualizations.visualization}`}
-                    alt="Comprehensive Analysis Charts"
-                    width={800}
-                    height={600}
-                    className="mx-auto max-w-full h-auto rounded-lg shadow-md"
-                    priority
-                  />
+                <div className="grid lg:grid-cols-2 gap-8 items-start">
+                  <div className="text-center">
+                    <Image
+                      src={`data:image/png;base64,${results.visualizations.visualization}`}
+                      alt="Comprehensive Analysis Charts"
+                      width={800}
+                      height={600}
+                      className="mx-auto max-w-full h-auto rounded-lg shadow-md"
+                      priority
+                    />
+                  </div>
+                  <div className="text-sm text-gray-700 lg:flex lg:flex-col lg:h-full">
+                    <div className="mb-6 lg:mb-0 lg:flex-1 lg:flex lg:items-center">
+                      <p>
+                        The use of a dual-axis chart provides an effective visual representation of the relative dynamics between two time series with different price scales. Specifically, in the context of market-neutral strategies such as pair trading, this type of visualization is useful for identifying cointegration or, more simply, the temporary directional correlation of price movements, regardless of the absolute price levels
+                      </p>
+                    </div>
+                    <div className="mb-6 lg:mb-0 lg:flex-1 lg:flex lg:items-center">
+                      <p>
+                        The analysis of rolling correlations allows for the evaluation of not only the degree of correlation between two assets, but also its stability over time. Using different lookback periods helps distinguish between short-term dynamics and longer-term relationships, which tend to be more stable and structural.
+                      </p>
+                    </div>
+                    <div className="mb-6 lg:mb-0 lg:flex-1 lg:flex lg:items-center">
+                      <p>
+                        The visualization of log returns enables a direct assessment of the volatility profiles of the two assets. Higher amplitude in return fluctuations corresponds to greater market volatility. Logarithmic returns are employed instead of arithmetic returns because they are time-additive and more suitable for continuous-time stochastic models
+                      </p>
+                    </div>
+                    <div className="lg:flex-1 lg:flex lg:items-center">
+                      <p>
+                        An empirical estimate of the probability density function of logarithmic returns enables the analysis of the statistical characteristics of asset return distributions. This allows for the assessment of whether the distribution resembles a Gaussian  shape or exhibits deviations such as asymmetry and heavy tails. A tighter distribution generally indicates lower dispersion in returns, suggesting a more stable and less volatile asset
+                      </p>
+                    </div>
+                  </div>
                 </div>
               ) : (
                 !loading && <p className="text-center text-gray-500">Visualization data not available.</p>
