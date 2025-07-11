@@ -69,7 +69,8 @@ class OptionLeg(BaseModel):
     position: int     # 1 for buy, -1 for sell
     
 class OptionsStrategyRequest(BaseModel):
-    spot_price: float
+    ticker: str
+    spot_price: Optional[float] = None
     volatility: float  # in percentage
     rate: float       # in percentage
     days_to_expiry: int
@@ -581,11 +582,19 @@ async def simulate_options_strategy(request: OptionsStrategyRequest):
         T = request.days_to_expiry / 365  # Convert days to years
         sigma = request.volatility / 100
         r = request.rate / 100
+        spot_price = request.spot_price
+
+        if spot_price is None:
+            ticker = yf.Ticker(request.ticker)
+            info = ticker.info
+            spot_price = info.get("ask")
+            if spot_price is None:
+                raise HTTPException(status_code=400, detail=f"Could not fetch current price for {request.ticker}")
         
         # Create price range for simulation
-        buffer = request.spot_price * 0.75
-        S_min = max(0, request.spot_price - buffer)
-        S_max = request.spot_price + buffer
+        buffer = spot_price * 0.75
+        S_min = max(0, spot_price - buffer)
+        S_max = spot_price + buffer
         S_range = np.linspace(S_min, S_max, 100)
         
         # Initialize arrays
@@ -599,7 +608,7 @@ async def simulate_options_strategy(request: OptionsStrategyRequest):
         
         for option in request.options:
             # Calculate greeks at current spot
-            greeks = black_scholes_greeks(request.spot_price, option.strike, T, r, sigma, option.option_type)
+            greeks = black_scholes_greeks(spot_price, option.strike, T, r, sigma, option.option_type)
             
             # Add to total greeks (weighted by position)
             for key in total_greeks:
@@ -628,7 +637,7 @@ async def simulate_options_strategy(request: OptionsStrategyRequest):
         
         return {
             "strategy_parameters": {
-                "spot_price": request.spot_price,
+                "spot_price": spot_price,
                 "volatility_pct": request.volatility,
                 "rate_pct": request.rate,
                 "days_to_expiry": request.days_to_expiry

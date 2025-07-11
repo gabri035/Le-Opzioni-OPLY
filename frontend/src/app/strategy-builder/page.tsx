@@ -51,6 +51,8 @@ export default function StrategyBuilder() {
     daysToExpiry: 30
   });
 
+  const [useSpotPrice, setUseSpotPrice] = useState(true);
+
   const [optionLegs, setOptionLegs] = useState<OptionLeg[]>([
     {
       strike: 150,
@@ -90,7 +92,8 @@ export default function StrategyBuilder() {
 
     try {
       const requestData: OptionsStrategyRequest = {
-        spot_price: formData.spotPrice,
+        ticker: formData.ticker,
+        spot_price: useSpotPrice ? formData.spotPrice : null,
         volatility: formData.volatility,
         rate: formData.riskFreeRate,
         days_to_expiry: formData.daysToExpiry,
@@ -162,8 +165,28 @@ export default function StrategyBuilder() {
                   step="0.01"
                   value={formData.spotPrice}
                   onChange={(e) => setFormData({...formData, spotPrice: parseFloat(e.target.value)})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  disabled={!useSpotPrice}
+                  className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                    !useSpotPrice ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : ''
+                  }`}
                 />
+                <div className="mt-2 flex items-center">
+                  <input
+                    type="checkbox"
+                    id="useSpotPrice"
+                    checked={useSpotPrice}
+                    onChange={(e) => setUseSpotPrice(e.target.checked)}
+                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  />
+                  <label htmlFor="useSpotPrice" className="ml-2 text-sm text-gray-700">
+                    Use manual spot price
+                  </label>
+                </div>
+                {!useSpotPrice && (
+                  <p className="text-xs text-gray-500 mt-1">
+                    Spot price will be automatically fetched from {formData.ticker}
+                  </p>
+                )}
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Volatility (%)</label>
@@ -338,7 +361,10 @@ export default function StrategyBuilder() {
                 </div>
                 <div className="bg-blue-50 rounded-lg p-4 border border-blue-300 border-2">
                   <h4 className="text-lg font-semibold text-blue-900 mb-2">Current Spot</h4>
-                  <p className="text-2xl font-bold text-blue-800">${formData.spotPrice}</p>
+                  <p className="text-2xl font-bold text-blue-800">${results.strategy_parameters.spot_price}</p>
+                  {!useSpotPrice && (
+                    <p className="text-xs text-blue-600 mt-1">Auto-fetched from {formData.ticker}</p>
+                  )}
                 </div>
                 <div className="bg-purple-50 rounded-lg p-4 border border-purple-300 border-2">
                   <h4 className="text-lg font-semibold text-purple-900 mb-2">Days to Expiry</h4>
@@ -401,7 +427,7 @@ export default function StrategyBuilder() {
                       labelFormatter={(value: number) => `Price: $${value.toFixed(2)}`}
                     />
                     <ReferenceLine y={0} stroke="#666" strokeDasharray="2 2" />
-                    <ReferenceLine x={formData.spotPrice} stroke="#8884d8" strokeDasharray="5 5" />
+                    <ReferenceLine x={results.strategy_parameters.spot_price} stroke="#8884d8" strokeDasharray="5 5" />
                     <Line 
                       type="monotone" 
                       dataKey="payoff" 
