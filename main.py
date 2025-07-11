@@ -1,12 +1,13 @@
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from datetime import datetime
-from typing import List, Optional, Dict, Any
-import pandas as pd
+from typing import List, Optional
 import yfinance as yf
 import numpy as np
+import matplotlib
+matplotlib.use('Agg')
+matplotlib.rcParams['figure.max_open_warning'] = 0
 import matplotlib.pyplot as plt
 import seaborn as sns
 import statsmodels.api as sm
@@ -15,7 +16,7 @@ from scipy.stats import gaussian_kde
 import matplotlib.gridspec as gridspec
 import base64
 import io
-from Colab.funzioni import analisi_comparata_completa_con_asimmetria_graduale, analisi_statistiche, analisi_statistiche_TAB
+from Colab.funzioni import analisi_comparata_completa_con_asimmetria_graduale, analisi_statistiche
 from options_utils import black_scholes, black_scholes_greeks
 
 app = FastAPI(title="Stock Analysis API", description="API for stock analysis and cointegration", version="1.0.0")
@@ -86,10 +87,12 @@ def download_stock_data(stocks, start_date, end_date, period="1d"):
 def plot_to_base64(fig):
     """Convert matplotlib figure to base64 string"""
     buffer = io.BytesIO()
-    fig.savefig(buffer, format='png', dpi=150, bbox_inches='tight')
+    fig.savefig(buffer, format='png', dpi=150, bbox_inches='tight', 
+                facecolor='white', edgecolor='none')
     buffer.seek(0)
     image_base64 = base64.b64encode(buffer.getvalue()).decode('utf-8')
     plt.close(fig)
+    buffer.close()
     return image_base64
 
 
@@ -198,7 +201,8 @@ async def generate_visualizations(request: StockAnalysisRequest):
         ret_margin = 0.05 * (y_ret_max - y_ret_min)
         
         # Create comprehensive plot
-        fig = plt.figure(figsize=(18, 16))
+        plt.style.use('default')
+        fig = plt.figure(figsize=(18, 16), dpi=100)
         gs = gridspec.GridSpec(4, 2, height_ratios=[1, 1, 1, 1])
         
         # Row 1: Prices with dual axis
@@ -393,7 +397,8 @@ async def cointegration_plots(request: CointegrationRequest):
         r2_2 = model2.rsquared
         
         # Plot 1: Regression 1
-        fig1, axs1 = plt.subplots(3, 1, figsize=(10, 12))
+        plt.style.use('default')
+        fig1, axs1 = plt.subplots(3, 1, figsize=(10, 12), dpi=100)
         
         axs1[0].scatter(close1, close2, alpha=0.5, label='Data')
         axs1[0].plot(close1, y1_pred, color='red', label='Regression')
@@ -426,7 +431,8 @@ async def cointegration_plots(request: CointegrationRequest):
         plot1_base64 = plot_to_base64(fig1)
         
         # Plot 2: Regression 2
-        fig2, axs2 = plt.subplots(3, 1, figsize=(10, 12))
+        plt.style.use('default')
+        fig2, axs2 = plt.subplots(3, 1, figsize=(10, 12), dpi=100)
         
         axs2[0].scatter(close2, close1, alpha=0.5, label='Data')
         axs2[0].plot(close2, y2_pred, color='blue', label='Regression')
