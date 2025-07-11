@@ -41,6 +41,9 @@ export default function RootLayout({
                 <Link href="/strategy-builder" className="text-gray-700 hover:text-purple-600 px-3 py-2 text-sm font-medium">
                   Strategy Builder
                 </Link>
+                <Link href="/about" className="text-gray-700 hover:text-purple-600 px-3 py-2 text-sm font-medium">
+                  About
+                </Link>
               </div>
             </div>
           </div>
