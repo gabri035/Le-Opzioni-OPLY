@@ -35,17 +35,17 @@ export default function AboutPage() {
             By harnessing Python, he has developed sophisticated algorithms for financial-market analysis, while his activity on GitHub reflects an unwavering commitment to collaborative excellence and open-source development. His expertise with MQL5 showcases his ability to translate quantitative strategies into automated trading solutions. Expanding his web-development skills led to the creation of Callz, our flagship quantitative-analysis tool.
           </p>
           <p>
-            Investment specialist, holder of a Master's degree in Economics and Finance from Università Cattolica di Milano, he now works for an Italian private-finance firm.
+            Investment specialist, holder of a Master&apos;s degree in Economics and Finance from Università Cattolica di Milano, he now works for an Italian private-finance firm.
           </p>
           <blockquote className="border-l-4 border-purple-400 pl-4 italic text-gray-700">
-            His mission is simple: "to make the complexity of financial markets accessible and transparent."
+            His mission is simple: &ldquo;to make the complexity of financial markets accessible and transparent.&rdquo;
           </blockquote>
         </div>
       </div>
       
       <div className="max-w-4xl w-full mt-8 bg-white/80 rounded-2xl shadow-lg p-4 md:p-8 text-center">
         <p className="text-lg text-gray-700 mb-4">
-          His Italian-language master's thesis—focused on pairs trading and a statistical study for options trading implemented in Python—is available for download, completely open source, on his GitHub repository at the following link:
+          His Italian-language master&apos;s thesis—focused on pairs trading and a statistical study for options trading implemented in Python—is available for download, completely open source, on his GitHub repository at the following link:
         </p>
         <Link href="https://github.com/gabri035/LeOpzioni" target="_blank" className="inline-block bg-purple-600 hover:bg-purple-700 text-white font-medium py-3 px-6 rounded-lg transition-colors duration-200">
           LeOpzioni
