@@ -246,28 +246,3 @@ The API includes proper error handling for:
 - Missing or malformed request data
 
 All errors return appropriate HTTP status codes with descriptive messages.
-
-## Quick Deploy to Render
-
-[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy)
-
-1. **One-Click Deploy:** Click the button above or go to [render.com](https://render.com)
-2. **Connect Repository:** Link your GitHub account and select this repository
-3. **Automatic Setup:** Render will detect the `render.yaml` configuration
-4. **Live API:** Your API will be available at `https://your-service-name.onrender.com`
-
-### Manual Render Setup
-
-Alternatively, you can manually configure:
-- **Build Command:** `pip install -r requirements.txt`
-- **Start Command:** `uvicorn main:app --host 0.0.0.0 --port $PORT`
-- **Python Version:** 3.11
-- **Health Check:** `/health`
-
-### After Deployment
-
-- **API Documentation:** `https://your-service-name.onrender.com/docs`
-- **Health Check:** `https://your-service-name.onrender.com/health`
-- **API Status:** `https://your-service-name.onrender.com/`
-
-For detailed deployment instructions, see [DEPLOYMENT.md](DEPLOYMENT.md). 

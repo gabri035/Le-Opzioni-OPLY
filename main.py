@@ -16,7 +16,7 @@ from scipy.stats import gaussian_kde
 import matplotlib.gridspec as gridspec
 import base64
 import io
-from Colab.funzioni import analisi_comparata_completa_con_asimmetria_graduale, analisi_statistiche
+from pairs_trading.funzioni import analisi_comparata_completa_con_asimmetria_graduale, analisi_statistiche
 from options_utils import black_scholes, black_scholes_greeks
 
 app = FastAPI(title="Stock Analysis API", description="API for stock analysis and cointegration", version="1.0.0")
